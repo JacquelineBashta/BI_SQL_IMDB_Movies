@@ -311,9 +311,9 @@ on actors.id = winer_actor_info.actor_id;
 -- -----------------------------------------------
 -- What is the most common name for actors? And for directors?
 -- Q : first name or full name?
-select count(distinct(id)) as num_of_actors , first_name , last_name
+select count(distinct(id)) as num_of_actors , first_name -- , last_name
 from actors
-group by first_name, last_name
+group by first_name -- , last_name
 order by num_of_actors desc
 limit 1;
 
@@ -323,10 +323,44 @@ from directors
 group by first_name, last_name
 order by num_of_directors desc
 limit 1;
+
+select query_1.num_first , query_2.last_name
+from (
+select count(distinct(id)) as num_first , first_name , id = 1
+from directors
+group by first_name
+order by num_first desc
+limit 1 ) query_1
+left outer join
+(
+select count(distinct(id)) as num_last, last_name, id=1
+from directors
+group by last_name
+order by num_last desc
+limit 1
+) query_2 on query_1.id = query_2.id ;
+
+
 -- -----------------------------------------------
 ## Analysing genders
 ##############################
 -- How many actors are male and how many are female?
+SELECT gender, COUNT(gender)
+FROM actors
+GROUP BY gender;
+
+SELECT
+(
+SELECT COUNT(id) 
+FROM actors
+WHERE gender LIKE "f"
+)
+/
+(
+SELECT COUNT(id)
+FROM actors
+) as perct;
+
 
 with male_female as (
 SELECT
@@ -386,7 +420,7 @@ from movies;
 -- What is the evolution of the top movie genres across all the decades of the 20th century?
 with genre_count_per_decade as (
 select rank() over (partition by decade order by movies_per_genre desc) ranking, genre, decade
-from (SELECT 
+from (select 
     genre,
     FLOOR(m.year / 10) * 10 AS decade,
     COUNT(genre) AS movies_per_genre
@@ -394,7 +428,7 @@ FROM
     movies_genres mg
         JOIN
     movies m ON m.id = mg.movie_id
-GROUP BY decade , genre) as a
+group by decade , genre) as a
 )
 select genre, decade
 FROM genre_count_per_decade
